@@ -1,0 +1,67 @@
+---
+- name: Configure nginx reverse proxy gateway
+  hosts: all
+  gather_facts: true
+  become: true
+  vars:
+    domain: "{{ lookup('env', 'GATEWAY_FQDN') }}"
+    email: "{{ lookup('env', 'CERTBOT_EMAIL') }}"
+  tasks:
+    - name: enable EPEL repos (Amazon)
+      shell: "amazon-linux-extras enable epel"
+      when: (ansible_facts['distribution'] == 'Amazon' and ansible_facts['distribution_major_version'] == '2')
+
+    - name: install EPEL repos
+      yum:
+        name: epel-release
+        state: latest
+
+    - name: install nginx and certbot (Amazon / RHEL 7)
+      yum:
+        name:
+          - nginx
+          - certbot
+          - python2-certbot-nginx
+        state: latest
+      when: (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_major_version'] == '7') or
+            (ansible_facts['distribution'] == 'Amazon' and ansible_facts['distribution_major_version'] == '2')
+  
+    - name: install nginx and certbot (RHEL 8)
+      yum:
+        name:
+          - python3
+          - nginx
+          - certbot
+          - python3-certbot-nginx
+        state: latest
+      when: (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_major_version'] == '8')
+
+    - name: obtain TLS certificate from certbot
+      shell: certbot certonly --standalone --agree-tos -m "{{ email }}" -d "{{ domain }}"
+
+    - name: configure nginx
+      template: 
+        src: templates/nginx.j2
+        dest: /etc/nginx/nginx.conf
+      notify:
+        - restart nginx
+
+    - name: schedule certificate renewal
+      shell: echo "0 0,12 * * * root python3 -c 'import random; import time; time.sleep(random.random() * 3600)' && certbot renew --pre-hook "service nginx stop" --post-hook "service nginx start" -q" | sudo tee -a /etc/crontab > /dev/null
+
+    - name: burn host firewall
+      firewalld:
+        service: "{{ item }}"
+        state: enabled
+        permanent: true
+      loop:
+        - http
+        - https
+      when: ansible_facts['distribution'] == 'CentOS'
+        
+  handlers:
+    - name: restart nginx
+      service:
+        name: nginx.service
+        state: restarted
+        enabled: true

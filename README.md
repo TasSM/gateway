@@ -1,12 +1,13 @@
-# gateway
+# dpeloy
 
-An nginx server automation toolkit and application.
+A dockerized nginx deployment automation for your CICD pipeline.
+
+## Environment Variables
+`HOSTED_ZONE_ID` = ID of the hosted zone in Route53 to add the DNS record
+`RECORD_NAME` = DNS record name (e.g. server.bigcorp.com)
+`DNS_TARGET` = ipv4 address or an existing domain (Will automatically create the appropriate A or CNAME record)
 
 TODO:
 
-0. Custom error pages + review nginx.conf
-1. AWS R53 Automation
+0. Custom error pages + review base nginx.conf
 2. Jenkinsfile
-3. Python server agent (+ Certificate generation)
-4. Python management app
-5. Security

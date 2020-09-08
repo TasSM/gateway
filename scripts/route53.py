@@ -1,11 +1,12 @@
 import boto3
 from botocore.exceptions import ClientError
 import json
+import datetime
 
-class R53DomainManager:
-    
-    def __init__(self, hostedZone, **kwargs):
-        self.hostedZone = hostedZone
+class Route53DomainManager:
+
+    def __init__(self, hosted_zone, **kwargs):
+        self.hosted_zone = hosted_zone
         self.client = boto3.client("route53")
         if "debug" in kwargs and kwargs.get("debug") is True:
             self.debug = True
@@ -14,27 +15,49 @@ class R53DomainManager:
 
     def __debug(self, response):
         if self.debug is True:
-            print(json.dumps(response, indent=4))
+            print(json.dumps(response["ResponseMetadata"], indent=4))
 
-    def resolve_record(self, recordName):
+    def test_record(self, record_type, record_name):
         try:
             response = self.client.test_dns_answer(
-                HostedZoneId=self.hostedZone,
-                RecordName=recordName,
-                RecordType='A'
+                HostedZoneId=self.hosted_zone,
+                RecordName=record_name,
+                RecordType=record_type
+            )
+            self.__debug(response)
+            return response["RecordData"]
+        except ClientError as err:
+            print("Function {0} Encountered Exception: {1}".format("resolve_record",err))
+
+    def create_record(self, record_type, record_name, target, **kwargs):
+        try:
+            if "ttl" in kwargs and isinstance(kwargs.get("ttl"), int):
+                ttlValue = max(60, min(kwargs.get("ttl"), 172800))
+            else:
+                ttlValue = 300  
+            timestamp = datetime.datetime.now().strftime("%M-%D-%YT%H:%M:%S")
+            response = self.client.change_resource_record_sets(
+                HostedZoneId=self.hosted_zone,
+                ChangeBatch={
+                    "Comment": "Modified by Route53DomainManager at {0}".format(timestamp),
+                    "Changes": [
+                        {
+                            "Action": "CREATE",
+                            "ResourceRecordSet": {
+                                "Name": record_name,
+                                "Type": record_type,
+                                "TTL": ttlValue,
+                                "ResourceRecords": [
+                                    {
+                                        "Value": target
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
             )
             self.__debug(response)
         except ClientError as err:
             print("Function {0} Encountered Exception: {1}".format("resolve_record",err))
 
-    def create_Arecord(self, recordName, ip, **kwargs):
-        try:
-            response = self.client.change_resource_record_sets()
-            self.__debug(response)
-        except ClientError as err:
-            print("Function {0} Encountered Exception: {1}".format("resolve_record",err))
-
-
-domain_mgr = R53DomainManager('Z03233031BTY3TL4UAL96', debug=True)
-
-domain_mgr.resolve_record('test.devprod1.com')

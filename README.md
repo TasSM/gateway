@@ -12,8 +12,6 @@ A dockerized nginx deployment automation for your CICD pipeline.
 
 `GATEWAY_USER` = SSH user for the webserver
 
-`GATEWAY_HOST_KEY` = SSH key to access the webserver
-
 `CERTBOT_EMAIL` = E-mail address to register TLS certificate against
 
 
@@ -25,6 +23,23 @@ A dockerized nginx deployment automation for your CICD pipeline.
 
 `AWS_SECRET_ACCESS_KEY` = AWS secret access key
 
+## Volumes
+
+Mount the Gateway SSH key as volume: `/root/.ssh/gw-key` 
+
+
+## Docker Commands
 ```
 docker build -t gateway:prod .
 ```
+
+```
+docker run -v $(pwd)/ssh_key:/root/.ssh/gw-key  ...-e ENVIRONMENT VARIABLES... gateway:prod
+```
+
+#### TODO
+
+1. Teardown scripts (revoke certs)
+2. Jenkinsfile
+3. custom entry points
+4. customer error pages

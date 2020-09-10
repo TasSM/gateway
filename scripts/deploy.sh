@@ -6,13 +6,12 @@ INVENTORY_FILE=/gateway/ansible/inventory.ini
 KEY_FILE=/root/.ssh/gw-key
 TIMEOUT=300
 
-if [[ -z $GATEWAY_HOST || -z $GATEWAY_USER || -z $GATEWAY_FQDN || -z $GATEWAY_HOST_KEY || -z $CERTBOT_EMAIL ]]; then
+if [[ -z $GATEWAY_HOST || -z $GATEWAY_USER || -z $GATEWAY_FQDN || -z $CERTBOT_EMAIL ]]; then
     echo "-- ERROR: missing one or more required environment variables --"
     exit 1
 fi
 
 # Create necessary files
-mkdir -p /root/.ssh && echo $GATEWAY_HOST_KEY > $KEY_FILE && chmod 400 $KEY_FILE
 echo "[webservers]" > $INVENTORY_FILE && echo $GATEWAY_HOST >> $INVENTORY_FILE
 
 if [[ ! -z $HOSTED_ZONE_ID ]]; then
@@ -47,4 +46,5 @@ if [[ ! -z $HOSTED_ZONE_ID ]]; then
 
 fi
 
+ssh-keyscan -H $GATEWAY_HOST >> /root/.ssh/known_hosts
 ansible-playbook /gateway/ansible/configure-nginx.yml -i $INVENTORY_FILE  -u $GATEWAY_USER --private-key $KEY_FILE

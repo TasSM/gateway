@@ -27,7 +27,8 @@ class Route53DomainManager:
             self.__debug(response)
             return response["RecordData"]
         except ClientError as err:
-            print("Function {0} Encountered Exception: {1}".format("resolve_record",err))
+            print("Function {0} Encountered Exception: {1}".format("test_record",err))
+            exit(1)
 
     def create_record(self, record_type, record_name, target, **kwargs):
         try:
@@ -59,5 +60,6 @@ class Route53DomainManager:
             )
             self.__debug(response)
         except ClientError as err:
-            print("Function {0} Encountered Exception: {1}".format("resolve_record",err))
+            print("Function {0} Encountered Exception: {1}".format("create_record",err))
+            exit(1)
 

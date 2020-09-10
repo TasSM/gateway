@@ -1,13 +1,30 @@
-# dpeloy
+# gateway
 
 A dockerized nginx deployment automation for your CICD pipeline.
 
 ## Environment Variables
+
+### MANDATORY
+
+`GATEWAY_FQDN` = DNS record name (e.g. server.bigcorp.com)
+
+`GATEWAY_HOST` = ipv4 address or an existing domain (Will automatically create the appropriate A or CNAME record)
+
+`GATEWAY_USER` = SSH user for the webserver
+
+`GATEWAY_HOST_KEY` = SSH key to access the webserver
+
+`CERTBOT_EMAIL` = E-mail address to register TLS certificate against
+
+
+### REQUIRED FOR Route53 RECORD CREATION
+
 `HOSTED_ZONE_ID` = ID of the hosted zone in Route53 to add the DNS record
-`RECORD_NAME` = DNS record name (e.g. server.bigcorp.com)
-`DNS_TARGET` = ipv4 address or an existing domain (Will automatically create the appropriate A or CNAME record)
 
-TODO:
+`AWS_ACCESS_KEY_ID` = AWS Access Key ID
 
-0. Custom error pages + review base nginx.conf
-2. Jenkinsfile
+`AWS_SECRET_ACCESS_KEY` = AWS secret access key
+
+```
+docker build -t gateway:prod .
+```
